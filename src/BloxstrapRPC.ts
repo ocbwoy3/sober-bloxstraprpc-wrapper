@@ -131,13 +131,6 @@ export class BloxstrapRPC {
 						url: `roblox://experiences/start?placeId=${this.aw.ActivityPlaceId}&gameInstanceId=${this.aw.ActivityJobId}`
 					}
 				)
-			} else {
-				rpc.buttons?.push(
-					{
-						label:"GitHub",
-						url: "https://github.com/ocbwoy3/sober-bloxstraprpc-wrapper"
-					}
-				)	
 			}
 			await this.rp.setActivity(rpc,1)
 		} catch (e_) {
