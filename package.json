@@ -1,0 +1,31 @@
+{
+  "name": "sober-bloxstraprpc-wrapper",
+  "version": "1.0.0",
+  "description": "BloxstrapRPC wrapper for Sober",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "trap \"rm -rf dist\" EXIT && tsc && node dist/index.js",
+    "build": "trap \"rm -rf dist\" EXIT && tsc",
+    "exec": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ocbwoy3/sober-bloxstraprpc-wrapper.git"
+  },
+  "author": "OCbwoy3",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ocbwoy3/sober-bloxstraprpc-wrapper/issues"
+  },
+  "homepage": "https://github.com/ocbwoy3/sober-bloxstraprpc-wrapper#readme",
+  "devDependencies": {
+    "@types/discord-rpc": "^4.0.8",
+    "@types/node": "^22.5.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@types/discord-rich-presence": "^0.0.2",
+    "discord-rpc": "^4.0.1"
+  }
+}
