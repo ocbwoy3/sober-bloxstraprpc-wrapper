@@ -1,6 +1,6 @@
 import { homedir } from "os";
 
-export const LAUNCH_COMMAND = "flatpak run org.vinegarhq.Sober";
+export const LAUNCH_COMMAND = "gamemoderun flatpak run org.vinegarhq.Sober";
 export const DISCORD_APPID = "1005469189907173486";
 export const SMALL_IMAGE_KEY = "roblox";
 export const LOGFILE_PATH = `${homedir()}/.var/app/org.vinegarhq.Sober/data/sober/appData/logs/`; // must end with a slash

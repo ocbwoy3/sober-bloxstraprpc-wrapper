@@ -3,6 +3,7 @@ import * as constants from "./constants";
 import { GameDetailResponse, RichPresence, ServerType, UniverseIdResponse } from "./types";
 import { GetPlaceDetails, GetPlaceIcon, GetUniverseId } from "./RobloxAPI";
 import rpc, { Presence } from "discord-rpc";
+import { exec } from "node:child_process";
 
 export class BloxstrapRPC {
 	private aw: ActivityWatcher | undefined;
@@ -15,10 +16,27 @@ export class BloxstrapRPC {
 		this.aw = aw;
 		this.rp = new rpc.Client({transport:'ipc'})
 		aw.BloxstrapRPCEvent.on("Message",(a)=>{
-			// console.debug("BloxstrapRPC!!!!!!!!!!!!",a)
+			console.log("[BloxstrapRPC]","Setting Rich Presence:")
+			console.log(a)
 			try {
 				this.setStashedMessage(a)
 			} catch {}
+			// Regretevator
+			try {
+				if (this._stashedRPCMessage?.largeImage?.hoverText === "THE REGRET ELEVATOR" && this._stashedRPCMessage?.smallImage?.hoverText === "The Axolotl Sun") {
+					if ((a.state as string).match(/^On Floor ([0-9]+)$/)) {
+						const f = (a.state as string).replace(/[a-zA-Z ]*/g,'')
+						exec(`notify-send -u low "Regretevator" "Floor ${f}"`)
+					} else if ((a.state as string) === "Going up!") {
+						exec(`notify-send -u low "Regretevator" "Going Up!"`)
+					}
+				}
+			} catch {}
+		})
+		aw.BloxstrapRPCEvent.on("OnGameJoin",()=>{
+			this._stashedRPCMessage = {
+				timeStart: this._timeStartedUniverse
+			}
 		})
 		this.rp.login({ clientId: constants.DISCORD_APPID }).catch(console.error)
 	};
@@ -68,6 +86,7 @@ export class BloxstrapRPC {
 		try {
 			universeId = await GetUniverseId(this.aw.ActivityPlaceId);
 		} catch {
+			// exec(`notify-send -u low "Roblox" "Failed to get Universe ID of ${this.aw.ActivityPlaceId}."`)
 			console.log("[BloxstrapRPC]", `Could not get Universe ID! PlaceId: ${this.aw.ActivityPlaceId}`);
 			return false;
 		}
@@ -84,6 +103,7 @@ export class BloxstrapRPC {
 		try {
 			universeDetails = (await GetPlaceDetails(universeId)) as GameDetailResponse;
 		} catch {
+			// exec(`notify-send -u low "Roblox" "Failed to get Universe Details for ${universeId}."`)
 			console.log("[BloxstrapRPC]", `Could not get Universe details! PlaceId: ${this.aw.ActivityPlaceId} UniverseId: ${universeId}`);
 			return false;
 		}
@@ -94,6 +114,7 @@ export class BloxstrapRPC {
 		try {
 			thumbnailIcon = (await GetPlaceIcon(universeId)) as string;
 		} catch {
+			// exec(`notify-send -u low "Roblox" "Failed to get Universe Icon for ${universeId}."`)
 			console.log("[BloxstrapRPC]", `Could not get Universe icon! PlaceId: ${this.aw.ActivityPlaceId} UniverseId: ${universeId}`);
 			return false;
 		}
@@ -114,7 +135,7 @@ export class BloxstrapRPC {
 			let rpc: Presence = {
 				details: (this._stashedRPCMessage?.details ? this._stashedRPCMessage.details : (constants.LANG.Activity_Playing.replace('GAME',universeDetails.name))),
 				state: (this._stashedRPCMessage?.state ? this._stashedRPCMessage.state : status),
-				startTimestamp: this._stashedRPCMessage?.timeStart || this._timeStartedUniverse,
+				startTimestamp: this._stashedRPCMessage?.timeStart,
 				endTimestamp: this._stashedRPCMessage?.timeEnd,
 				largeImageKey: (this._stashedRPCMessage?.largeImage?.assetId ? `https://assetdelivery.roblox.com/v1/asset/?id=${this._stashedRPCMessage.largeImage.assetId}` : thumbnailIcon),
 				largeImageText: this._stashedRPCMessage?.largeImage?.hoverText,

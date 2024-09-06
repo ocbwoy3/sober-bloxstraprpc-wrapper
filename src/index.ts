@@ -27,7 +27,7 @@ const richPresenceInterval = setInterval(()=>{
 		console.error("[MAIN]","Failed to update rich presence in interval!")
 		console.error("[MAIN]",e_)
 	}
-},100)
+},250)
 
 async function clearRichPresence(): Promise<void> {
 	try {
@@ -43,11 +43,11 @@ process.on("SIGINT",async()=>{
 	console.warn("[MAIN]","Received CTRL+C signal, killing!");
 	try { clearInterval(richPresenceInterval); } catch {}
 	await clearRichPresence()
-	soberProcess.kill(0);
+	soberProcess.kill(1);
 	process.exit(0);
 });
 
-soberProcess.on("exit",async()=>{
+soberProcess.on("exit",async(code:number|null)=>{
 	console.log("\n");
 	console.warn("[MAIN]","Sober died, exiting!");
 	try { clearInterval(richPresenceInterval); } catch {}

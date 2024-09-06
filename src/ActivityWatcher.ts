@@ -7,6 +7,7 @@ import { join } from "path";
 import { getMostRecentFile } from "./util";
 import { readFileSync, watchFile } from "fs";
 import { buffer } from "node:stream/consumers";
+import { GetPlaceDetails, GetUniverseId } from "./RobloxAPI";
 
 function escapeRegExp(s: string) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -38,8 +39,8 @@ const GameMessageEntryPattern = /\[BloxstrapRPC\] (.*)/;
 
 export class ActivityWatcher {
 
-	private _teleportMarker: boolean = false;
-	private _reservedTeleportMarker: boolean = false;
+	public _teleportMarker: boolean = false;
+	public _reservedTeleportMarker: boolean = false;
 
 	public ActivityInGame: boolean = false;
 	public ActivityPlaceId: number = 0;
@@ -59,7 +60,8 @@ export class ActivityWatcher {
 	
 	constructor(process: ChildProcess) {
 		this.roblox = process;
-		console.log("[ActivityWatcher]",`Obtained Sober process, PID: ${process.pid}`);
+		exec(`notify-send -u low "Roblox" "Obtained Sober process, PID: ${this.roblox.pid}."`)
+		console.log("[ActivityWatcher]",`Obtained Sober process, PID: ${this.roblox.pid}`);
 	};
 
 	private async onStdout(line_: string): Promise<void> {
@@ -128,7 +130,7 @@ export class ActivityWatcher {
 
 				this.ActivityInGame = true;
 				this.BloxstrapRPCEvent.emit("OnGameJoin");
-				try { exec(`notify-send -t 3500 -u low "Server Joined" "Place ID: ${this.ActivityPlaceId}${this.ActivityMachineUDMUX ? "\\n(UDMUX Protected)":""}"`) } catch {};
+				try { exec(`notify-send -t 3500 -u low "Roblox" "${(await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")}\nPlace ID: ${this.ActivityPlaceId}${this.ActivityMachineUDMUX ? "\\n(UDMUX Protected)":""}"`) } catch {};
 				console.log("[ActivityWatcher]", `Joined Game (${this.ActivityPlaceId}/${this.ActivityJobId}/${this.ActivityMachineAddress})`);
 				// OnGameJoin?.Invoke(this, new EventArgs());
 			}
@@ -173,6 +175,19 @@ export class ActivityWatcher {
 				try {
 					if (message.command === "SetRichPresence") {
 						this.BloxstrapRPCEvent.emit("Message",message.data)
+					} else if (message.command === "WaylandCopy") {
+						// x/print('[BloxstrapRPC] {"command":"WaylandCopy","data":"testing"}')
+						const fixed = (message.data as string).replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
+						const gmfixed = (await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
+						exec(`echo "${fixed}" | wl-copy`)
+						exec(`notify-send -u low "Roblox" "${gmfixed} wrote to the Wayland clipboard!"`)
+					} else if (message.command === "Hyprland") {
+						// // x/print('[BloxstrapRPC] {"command":"Hyprland","data":"dispatch fullscreen"}')
+						// // x/print('[BloxstrapRPC] {"command":"Hyprland","data":"exec sleep 5 && killall -9 sober"}')
+						// const fixed = (message.data as string).replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
+						// const gmfixed = (await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
+						// exec(`hyprctl ${fixed}`)
+						// exec(`notify-send -u low "Roblox" "${gmfixed} accessed Hyprland!"`)
 					} else if (message.command === "Debug") {
 
 						console.debug({
@@ -234,9 +249,10 @@ export class ActivityWatcher {
 
 		const robloxLogfile = await this.getLogfile();
 		console.log("[ActivityWatcher]",`Got Roblox log file: ${robloxLogfile}`)
-
+		
 		const logHandle = await open(robloxLogfile,'r+');
 		console.log("[ActivityWatcher]",`Opened readonly handle to log file.`)
+		exec(`notify-send -u low "Roblox" "Sucessfully obtained handle to log file."`)
 
 		try {
 			let position = 0;
@@ -245,7 +261,7 @@ export class ActivityWatcher {
 			while (true) {
 				const bytesRead = await logHandle.read(Buffer.alloc(1), 0, 1, position);
 				if (bytesRead.buffer.toString().charCodeAt(0) === 0) {
-					await new Promise(resolve => setTimeout(resolve, 1));
+					await new Promise(resolve => setTimeout(resolve, 100));
 				} else {
 					const newChar = bytesRead.buffer.toString();
 					position += 1;
