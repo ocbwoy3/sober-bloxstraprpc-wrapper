@@ -14,24 +14,28 @@ export class BloxstrapRPC {
 
 	constructor(aw: ActivityWatcher) {
 		this.aw = aw;
-		this.rp = new rpc.Client({transport:'ipc'})
+		this.rp = new rpc.Client({transport:'ipc'});
 		aw.BloxstrapRPCEvent.on("Message",(a)=>{
-			console.log("[BloxstrapRPC]","Setting Rich Presence:")
-			console.log(a)
+			console.log("[BloxstrapRPC]","Setting Rich Presence:");
+			console.log(a);
 			try {
-				this.setStashedMessage(a)
+				this.setStashedMessage(a);
 			} catch {}
-			// Regretevator
+
+			// https://github.com/ocbwoy3/dotfiles/tree/main/dunst/dunstrc
 			try {
 				if (this._stashedRPCMessage?.largeImage?.hoverText === "THE REGRET ELEVATOR" && this._stashedRPCMessage?.smallImage?.hoverText === "The Axolotl Sun") {
 					if ((a.state as string).match(/^On Floor ([0-9]+)$/)) {
 						const f = (a.state as string).replace(/[a-zA-Z ]*/g,'')
-						exec(`notify-send -u low "Regretevator" "Floor ${f}"`)
+						exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "Floor ${f}"`);
 					} else if ((a.state as string) === "Going up!") {
-						exec(`notify-send -u low "Regretevator" "Going Up!"`)
+						exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "Going Up!"`);
+					} else if ((a.state as string) === "Lounging in the lobby") {
+						exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "u dead lol"`);
 					}
 				}
 			} catch {}
+
 		})
 		aw.BloxstrapRPCEvent.on("OnGameJoin",()=>{
 			this._stashedRPCMessage = {

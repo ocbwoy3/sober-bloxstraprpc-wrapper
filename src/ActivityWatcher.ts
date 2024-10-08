@@ -3,11 +3,11 @@ import { Message, ServerType } from "./types";
 import EventEmitter from "events";
 import { LOGFILE_PATH, RECENT_LOG_THRESHOLD_SECONDS } from "./constants";
 import { open } from "fs/promises";
-import { join } from "path";
+import path, { join } from "path";
 import { getMostRecentFile } from "./util";
 import { readFileSync, watchFile } from "fs";
 import { buffer } from "node:stream/consumers";
-import { GetPlaceDetails, GetUniverseId } from "./RobloxAPI";
+import { GetPlaceDetails, GetPlaceIcon, GetUniverseId } from "./RobloxAPI";
 
 function escapeRegExp(s: string) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -60,7 +60,7 @@ export class ActivityWatcher {
 	
 	constructor(process: ChildProcess) {
 		this.roblox = process;
-		exec(`notify-send -u low "Roblox" "Obtained Sober process, PID: ${this.roblox.pid}."`)
+		exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Roblox" "PID: ${this.roblox.pid}."`)
 		console.log("[ActivityWatcher]",`Obtained Sober process, PID: ${this.roblox.pid}`);
 	};
 
@@ -130,7 +130,12 @@ export class ActivityWatcher {
 
 				this.ActivityInGame = true;
 				this.BloxstrapRPCEvent.emit("OnGameJoin");
-				try { exec(`notify-send -t 3500 -u low "Roblox" "${(await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")}\nPlace ID: ${this.ActivityPlaceId}${this.ActivityMachineUDMUX ? "\\n(UDMUX Protected)":""}"`) } catch {};
+				(async()=>{
+					const placeIcon = await GetPlaceIcon(await GetUniverseId(this.ActivityPlaceId))
+					exec(`curl "${placeIcon}" > /tmp/.soberwrapper_temp_placeicon.png && magick /tmp/.soberwrapper_temp_placeicon.png -resize 50x /tmp/.soberwrapper_temp_placeicon.png`,async()=>{
+						try { exec(`notify-send -i /tmp/.soberwrapper_temp_placeicon.png -a "sober-bloxstraprpc-wrapper" -t 3500 -u low "Roblox" "${(await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")}\nPlace ID: ${this.ActivityPlaceId}${this.ActivityMachineUDMUX ? "\\n<small>(UDMUX Protected)</small>":""}"`) } catch {};
+					})
+				})()
 				console.log("[ActivityWatcher]", `Joined Game (${this.ActivityPlaceId}/${this.ActivityJobId}/${this.ActivityMachineAddress})`);
 				// OnGameJoin?.Invoke(this, new EventArgs());
 			}
@@ -182,6 +187,7 @@ export class ActivityWatcher {
 						exec(`echo "${fixed}" | wl-copy`)
 						exec(`notify-send -u low "Roblox" "${gmfixed} wrote to the Wayland clipboard!"`)
 					} else if (message.command === "Hyprland") {
+						this.BloxstrapRPCEvent.emit("HyprlandIPCEvent",message.data)
 						// // x/print('[BloxstrapRPC] {"command":"Hyprland","data":"dispatch fullscreen"}')
 						// // x/print('[BloxstrapRPC] {"command":"Hyprland","data":"exec sleep 5 && killall -9 sober"}')
 						// const fixed = (message.data as string).replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
@@ -252,7 +258,7 @@ export class ActivityWatcher {
 		
 		const logHandle = await open(robloxLogfile,'r+');
 		console.log("[ActivityWatcher]",`Opened readonly handle to log file.`)
-		exec(`notify-send -u low "Roblox" "Sucessfully obtained handle to log file."`)
+		exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Roblox" "Sucessfully obtained handle to log file."`)
 
 		try {
 			let position = 0;
