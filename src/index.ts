@@ -4,7 +4,7 @@ import { ActivityWatcher } from "./ActivityWatcher";
 import { BloxstrapRPC } from "./BloxstrapRPC";
 import { clearInterval } from "timers";
 import { readdirSync, rmSync } from "fs";
-import { join } from "path";
+import path, { join } from "path";
 
 console.log("[MAIN]","Deleting ALL old log files")
 readdirSync(constants.LOGFILE_PATH).forEach((file:string)=>{
@@ -15,6 +15,8 @@ readdirSync(constants.LOGFILE_PATH).forEach((file:string)=>{
 
 console.log("[MAIN]",`Launching Sober with command: ${constants.LAUNCH_COMMAND}`);
 const soberProcess = exec(constants.LAUNCH_COMMAND)
+
+exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Roblox" "Lounching Roblox"`)
 
 const activityWatcher = new ActivityWatcher(soberProcess);
 activityWatcher.stdoutWatcher();

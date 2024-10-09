@@ -60,7 +60,7 @@ export class ActivityWatcher {
 	
 	constructor(process: ChildProcess) {
 		this.roblox = process;
-		exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Roblox" "PID: ${this.roblox.pid}."`)
+		// exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Roblox" "PID: ${this.roblox.pid}"`)
 		console.log("[ActivityWatcher]",`Obtained Sober process, PID: ${this.roblox.pid}`);
 	};
 
@@ -154,10 +154,12 @@ export class ActivityWatcher {
 				this.BloxstrapRPCEvent.emit("OnGameLeave")
 				// OnGameLeave?.Invoke(this, new EventArgs());
 			}  else if (line.includes(GameTeleportingEntry)) {
-				console.log("[ActivityWatcher]", "Initiating teleport to server ({ActivityPlaceId}/{ActivityJobId}/{ActivityMachineAddress})");
+				console.log("[ActivityWatcher]", `Initiating teleport to server ({ActivityPlaceId}/{ActivityJobId}/{ActivityMachineAddress})`);
 				this._teleportMarker = true;
+				exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Teleport Warning" "${(await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")} is teleporting you to another server."`)
 			} else if (this._teleportMarker && line.includes(GameJoiningReservedServerEntry)) {
 				this._reservedTeleportMarker = true;
+				exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Teleport Warning" "${(await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")} is teleporting you to a reserved server."`)
 			} else if (line.includes(GameMessageEntry)) {
 				const match: RegExpMatchArray = line.match(GameMessageEntryPattern) as RegExpMatchArray;
 				match.splice(0,1)
@@ -185,16 +187,19 @@ export class ActivityWatcher {
 						const fixed = (message.data as string).replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
 						const gmfixed = (await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
 						exec(`echo "${fixed}" | wl-copy`)
-						exec(`notify-send -u low "Roblox" "${gmfixed} wrote to the Wayland clipboard!"`)
+						exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -u low "Roblox" "${gmfixed} wrote to the Wayland clipboard!"`)
 					} else if (message.command === "Hyprland") {
 						this.BloxstrapRPCEvent.emit("HyprlandIPCEvent",message.data)
 						// // x/print('[BloxstrapRPC] {"command":"Hyprland","data":"dispatch fullscreen"}')
 						// // x/print('[BloxstrapRPC] {"command":"Hyprland","data":"exec sleep 5 && killall -9 sober"}')
+
 						// const fixed = (message.data as string).replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
 						// const gmfixed = (await GetPlaceDetails(await GetUniverseId(this.ActivityPlaceId))).name.replace("$","\\$").replace("\"","\\\"").replace("\n","\\n")
 						// exec(`hyprctl ${fixed}`)
-						// exec(`notify-send -u low "Roblox" "${gmfixed} accessed Hyprland!"`)
+						// exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -u low "Roblox" "${gmfixed} accessed Hyprland!"`)
 					} else if (message.command === "Debug") {
+
+						return;
 
 						console.debug({
 							_teleportMarker: this._teleportMarker,
@@ -208,6 +213,7 @@ export class ActivityWatcher {
 							ActivityIsTeleport: this.ActivityIsTeleport,
 							ActivityServerType: this.ActivityServerType
 						})
+
 						// x/print('[BloxstrapRPC] {"command":"Debug"}')
 					}
 				} catch {}
@@ -242,12 +248,9 @@ export class ActivityWatcher {
 	}
 
 	public async stdoutWatcher(): Promise<void> {
-		if (!this.roblox) {
-			console.error("[ActivityWatcher]",`activityWatcher.roblox is undefined!`);			
-			return;
-		}
+		if (!this.roblox) throw `activityWatcher.roblox is undefined!`;			
 		if (!this.roblox.stdout) {
-			console.error("[ActivityWatcher]",`Roblox's stdout doesn't exist, killing!`);			
+			console.error("[ActivityWatcher]",`Roblox doesn't have stdout, killing!`);			
 			this.roblox.kill(1);
 			process.exit(1);
 			return;
@@ -258,7 +261,6 @@ export class ActivityWatcher {
 		
 		const logHandle = await open(robloxLogfile,'r+');
 		console.log("[ActivityWatcher]",`Opened readonly handle to log file.`)
-		exec(`notify-send -i ${path.join(__dirname,"..","assets/roblox.png")} -a "sober-bloxstraprpc-wrapper" -u low "Roblox" "Sucessfully obtained handle to log file."`)
 
 		try {
 			let position = 0;
@@ -296,12 +298,9 @@ export class ActivityWatcher {
 	}
 
 	public async stdoutWatcherOld(): Promise<void> {
-		if (!this.roblox) {
-			console.error("[ActivityWatcher]",`activityWatcher.roblox is undefined!`);			
-			return;
-		}
+		if (!this.roblox) throw "activityWatcher.roblox is undefined!";
 		if (!this.roblox.stdout) {
-			console.error("[ActivityWatcher]",`Roblox's stdout doesn't exist, killing!`);			
+			console.error("[ActivityWatcher]",`Roblox doesn't have stdout, exiting!`);			
 			this.roblox.kill(1);
 			process.exit(1);
 			return;

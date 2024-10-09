@@ -23,18 +23,24 @@ export class BloxstrapRPC {
 			} catch {}
 
 			// https://github.com/ocbwoy3/dotfiles/tree/main/dunst/dunstrc
-			try {
-				if (this._stashedRPCMessage?.largeImage?.hoverText === "THE REGRET ELEVATOR" && this._stashedRPCMessage?.smallImage?.hoverText === "The Axolotl Sun") {
-					if ((a.state as string).match(/^On Floor ([0-9]+)$/)) {
-						const f = (a.state as string).replace(/[a-zA-Z ]*/g,'')
-						exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "Floor ${f}"`);
-					} else if ((a.state as string) === "Going up!") {
-						exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "Going Up!"`);
-					} else if ((a.state as string) === "Lounging in the lobby") {
-						exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "u dead lol"`);
-					}
+			
+			(async()=>{
+				if (!this.aw) return;
+				if ((await GetUniverseId(this.aw?.ActivityPlaceId)) == (await GetUniverseId(4972273297))) {
+					try {
+						if (this._stashedRPCMessage?.largeImage?.hoverText === "THE REGRET ELEVATOR" && this._stashedRPCMessage?.smallImage?.hoverText === "The Axolotl Sun") {
+							if ((a.state as string).match(/^On Floor ([0-9]+)$/)) {
+								const f = (a.state as string).replace(/[a-zA-Z ]*/g,'')
+								exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "Floor ${f}"`);
+							} else if ((a.state as string) === "Going up!") {
+								exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "Going Up!"`);
+							} else if ((a.state as string) === "Lounging in the lobby") {
+								exec(`notify-send -a "sober-bloxstraprpc-wrapper" -u low "Regretevator" "u dead lol"`);
+							}
+						}
+					} catch {}
 				}
-			} catch {}
+			})().catch(()=>{})
 
 		})
 		aw.BloxstrapRPCEvent.on("OnGameJoin",()=>{
